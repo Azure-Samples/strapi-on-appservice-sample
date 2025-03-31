@@ -1,6 +1,8 @@
 # Project Name
 
-(short, 1-3 sentenced, description of the project)
+This is sample code for deploying Strapi on Azure App Service. Using pre-configured ARM templates and the existing Strapi 5 template, the deployment process is simplified, provisioning necessary resources like Azure Database for MySQL, Azure Storage, and an email plugin for password recovery.
+
+Resources
 
 ## Features
 
