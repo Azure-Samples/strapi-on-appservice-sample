@@ -12,7 +12,7 @@ This repository demonstrates how to deploy [Strapi](https://strapi.io/), an open
 
 ## Overview
 
-This repository contains all the necessary configuration files and instructions to deploy a production-ready Strapi instance on Azure App Service. It offers a quick-start guide to get your Strapi application up and running in the cloud with minimal setup.
+This repository contains all the necessary configuration files and instructions to deploy a production-ready Strapi instance on Azure App Service. It offers a quick-start guide to get your Strapi application up and running in the Azure with minimal setup.
 
 ## Features
 
@@ -43,6 +43,7 @@ Before proceeding, make sure you have the following installed:
 
 - Clone the repository.
 - Log in to Azure using the CLI with the command `az login`.
+- Update the parameters in `azure-quickstart-template/armtemplate.parameters.json` as per the requirement.
 - Trigger an ARM template deployment using the command below:
 
 ```bash
