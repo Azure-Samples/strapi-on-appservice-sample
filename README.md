@@ -1,57 +1,54 @@
-# Project Name
+# Strapi on Azure App Service Sample
 
-(short, 1-3 sentenced, description of the project)
+This repository demonstrates how to deploy [Strapi](https://strapi.io/), an open-source headless CMS, on [Azure App Service](https://azure.microsoft.com/en-us/services/app-service/). The sample includes step-by-step instructions, pre-configured code, and an ARM template to automate the deployment process.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Deployment Instructions](#deployment-instructions)
+
+## Overview
+
+This repository contains all the necessary configuration files and instructions to deploy a production-ready Strapi instance on Azure App Service. It offers a quick-start guide to get your Strapi application up and running in the cloud with minimal setup.
 
 ## Features
 
-This project framework provides the following features:
+- **Azure App Service Integration:** Run your Strapi instance directly on Azure.
+- **ARM Template:** Automate the creation of your Azure infrastructure (Resource Group, App Service Plan, and Web App).
+- **Scalability:** Leverage Azure's scalable platform to handle production workloads.
+- **Customizable Configuration:** Easily modify settings for environment variables and database connections to suit your needs.
 
-* Feature 1
-* Feature 2
-* ...
+## Architecture
 
-## Getting Started
+The solution is structured as a Node.js application hosted on Azure App Service. Key components include:
 
-### Prerequisites
+- **Strapi Backend:** A customizable headless CMS powering your content management needs.
+- **Azure App Service:** Provides the hosting environment for the application.
+- **ARM Template:** Automates the deployment of essential Azure resources, streamlining the setup process.
+- **Configuration Files:** Manage environment settings, deployment scripts, and resource definitions.
 
-(ideally very short, if any)
+## Prerequisites
 
-- OS
-- Library version
-- ...
+Before proceeding, make sure you have the following installed:
 
-### Installation
+- [Node.js](https://nodejs.org/) 
+- [Git](https://git-scm.com/)
+- An [Azure account](https://azure.microsoft.com/en-us/free/) with the necessary permissions to create App Services
+- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) (optional but recommended)
 
-(ideally very short)
+## Deployment Instructions
 
-- npm install [package name]
-- mvn install
-- ...
+- Clone the repository.
+- Log in to Azure using the CLI with the command `az login`.
+- Trigger an ARM template deployment using the command below:
 
-### Quickstart
-(Add steps to get up and running quickly)
-
-1. git clone [repository clone url]
-2. cd [repository name]
-3. ...
-
-
-## Demo
-
-A demo app is included to show how to use the project.
-
-To run the demo, follow these steps:
-
-(Add steps to start up the demo)
-
-1.
-2.
-3.
-
-## Resources
-
-(Any additional resources or related projects)
-
-- Link to supporting information
-- Link to similar sample
-- ...
+```bash
+az deployment group create \
+    --resource-group "your-resource-group-name" \
+    --name "your-deployment-name" \
+    --template-file "azure-quickstart-template/armtemplate.json" \
+    --parameters "azure-quickstart-template/armtemplate.parameters.json"
+```
