@@ -7,7 +7,7 @@
         "databaseAdminUsername": { "value": "[Enter admin username for the DB Server....]" },
         "databaseAdminPassword": { "value": "[Enter admin password for the DB Server....]" },
         "storageAccountPublicAccessEnabled": { "value": false },
-        "emailDataLocation": { "value": "United States" },
+        "emailDataLocation": { "value": "unitedstates" },
         "appKeys": { "value": "[Enter Strapi app keys....]" },
         "jwtSecret": { "value": "[Enter Strapi JWT secret....]" },
         "adminJwtSecret": { "value": "[Enter Strapi admin JWT secret....]" },
