@@ -9,6 +9,7 @@ This repository demonstrates how to deploy [Strapi](https://strapi.io/), an open
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Deployment Instructions](#deployment-instructions)
+- [Support](#support)
 
 ## Overview
 
@@ -50,14 +51,14 @@ Follow these steps to deploy the Strapi application on Azure:
    cd strapi-on-appservice-sample
    ```
 
-2. **Log in to Azure**
+2. **Log in to Azure**  
    Use the Azure CLI to log in to your Azure account:
 
-  ```bash
+   ```bash
    az login
-  ```
+   ```
 
-3. **Update Deployment Parameters**
+3. **Update Deployment Parameters**  
    Open the `azure-quickstart-template/armtemplate.parameters.json` file and update the parameters.
 
 4. **Deploy the ARM Template**  
