@@ -9,6 +9,7 @@ This repository demonstrates how to deploy [Strapi](https://strapi.io/), an open
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Deployment Instructions](#deployment-instructions)
+- [Support](#support)
 
 ## Overview
 
@@ -32,24 +33,57 @@ The solution is structured as a Node.js application hosted on Azure App Service.
 
 ## Prerequisites
 
-Before proceeding, make sure you have the following installed:
+Before proceeding, make sure you have the following:
 
-- [Node.js](https://nodejs.org/) 
 - [Git](https://git-scm.com/)
-- An [Azure account](https://azure.microsoft.com/en-us/free/) with the necessary permissions to create App Services
-- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) (optional but recommended)
+- An [Azure account](https://azure.microsoft.com/en-us/free/) with necessary permissions to create App Services.
+- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) installed (optional but recommended)
 
 ## Deployment Instructions
 
-- Clone the repository.
-- Log in to Azure using the CLI with the command `az login`.
-- Update the parameters in `azure-quickstart-template/armtemplate.parameters.json` as per the requirement.
-- Trigger an ARM template deployment using the command below:
+Follow these steps to deploy the Strapi application on Azure:
 
-```bash
-az deployment group create \
-    --resource-group "your-resource-group-name" \
-    --name "your-deployment-name" \
-    --template-file "azure-quickstart-template/armtemplate.json" \
-    --parameters "azure-quickstart-template/armtemplate.parameters.json"
-```
+1. **Clone the Repository**  
+   Clone this repository to your local machine:
+
+   ```bash
+   git clone https://github.com/Azure-Samples/strapi-on-appservice-sample.git
+   cd strapi-on-appservice-sample
+   ```
+
+2. **Log in to Azure**  
+   Use the Azure CLI to log in to your Azure account:
+
+   ```bash
+   az login
+   ```
+
+3. **Update Deployment Parameters**  
+   Open the `azure-quickstart-template/armtemplate.parameters.json` file and update the parameters.
+
+4. **Deploy the ARM Template**  
+   Run the following command to deploy the ARM template:
+
+   ```bash
+   az deployment group create \
+       --resource-group "<your-resource-group-name>" \
+       --name "<your-deployment-name>" \
+       --template-file "azure-quickstart-template/armtemplate.json" \
+       --parameters "azure-quickstart-template/armtemplate.parameters.json"
+   ```
+
+5. **Verify Deployment**  
+   Once the deployment is complete, navigate to the Azure Portal to verify that the resources (App Service, Database, etc.) have been created successfully.
+
+Alternatively, you can use the following button for a quick deployment:
+
+[![Deploy to Azure](./images/deploytoazure.svg)](https://ms.portal.azure.com/#create/microsoftazureappservices.strapi-on-app-servicesbasicplan)  
+
+## Support
+
+If you encounter any issues or need assistance, refer to the following resources:
+
+- [Strapi on App Service - Overview](https://techcommunity.microsoft.com/blog/appsonazureblog/strapi-on-app-service-overview/4401396)
+- [Strapi on App Service - Quickstart](https://techcommunity.microsoft.com/blog/appsonazureblog/strapi-on-app-service-quick-start/4401398)
+- [Strapi on App Service - FAQs](https://techcommunity.microsoft.com/blog/appsonazureblog/strapi-on-app-service-faq/4401397)
+- [File an Issue](https://portal.azure.com/#view/Microsoft_Azure_Support/NewSupportRequestV3Blade)

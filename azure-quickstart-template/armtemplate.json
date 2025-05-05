@@ -2,11 +2,18 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Choose the Azure region that's right for you and your customers. Not every resource is available in every region."
+            }
+        },
         "appName": {
             "type": "string",
             "defaultValue": "[concat('strapi', uniqueString(resourceGroup().id), '-app')]",
             "metadata": {
-                "description": "Name of the App Service"
+                "description": "Name of the Strapi web app on App Service"
             }
         },
         "databaseClient": {
@@ -34,34 +41,34 @@
         },
         "storageAccountPublicAccessEnabled": {
             "type": "bool",
-            "defaultValue": false,
+            "defaultValue": true,
             "metadata": {
-                "description": "Enable or disable public access to the storage account blob container"
+                "description": "Enable or disable public access to the blob storage account that will be used to store Strapi media files. If disabled, only private access will be allowed."
             }
         },
         "emailDataLocation":{
             "type": "string",
-            "defaultValue": "United States",
+            "defaultValue": "unitedstates",
             "allowedValues": [
-                "Africa",
-                "Asia Pacific",
-                "Australia",
-                "Brazil",
-                "Canada",
-                "Europe",
-                "France",
-                "Germany",
-                "India",
-                "Japan",
-                "Korea",
-                "Norway",
-                "Switzerland",
-                "United Arab Emirates",
-                "United Kingdom",
-                "United States"
+                "africa",
+                "asiapacific",
+                "australia",
+                "brazil",
+                "canada",
+                "europe",
+                "france",
+                "germany",
+                "india",
+                "japan",
+                "korea",
+                "norway",
+                "switzerland",
+                "uae",
+                "uk",
+                "unitedstates"
             ],
             "metadata": {
-                "description": "Location for the email data. Choose a location that best fits your compliance and data residency requirements."
+                "description": "The geography associated with the Azure communication service resource used for sending email. This location determines where your email data will be stored at rest. Choose a location that best fits your compliance and data residency requirements."
             }
         },
         "applicationMode": {
@@ -72,7 +79,7 @@
                 "production"
             ],
             "metadata": {
-                "description": "Type of environment for Strapi. Setting it to production disables edit controls for the content type builder. For production use, always set it to production."
+                "description": "Use development mode to start, develop, or test your Strapi application. For production, always set it to production mode, which disables edit controls for the content type builder."
             }
         },
         "appKeys": {
@@ -107,9 +114,8 @@
         }
     },
     "variables": {
-        "location": "[resourceGroup().location]",
         "appNameShortened": "[take(replace(parameters('appName'),'-',''), 9)]",
-        "uniqueNameSuffix": "[concat(variables('appNameShortened'), '-', uniqueString(parameters('appName'), resourceGroup().id))]",
+        "uniqueNameSuffix": "[toLower(concat(variables('appNameShortened'), '-', uniqueString(parameters('appName'), resourceGroup().id)))]",
         "hostingPlanName": "[concat('asp-', variables('uniqueNameSuffix'))]",
         "tags": { 
             "AppProfile": "Strapi" 
@@ -157,6 +163,7 @@
         "isPostgres": "[equals(parameters('databaseClient'), 'postgres')]",
         "databaseVersion":"[if(variables('isPostgres'), '16', '8.0.21')]",
         "databaseServiceName": "[if(variables('isPostgres'), 'Microsoft.DBforPostgreSQL/flexibleServers', 'Microsoft.DBforMySQL/flexibleServers')]",
+        "databaseResouceType": "[concat(variables('databaseServiceName'), '/databases')]",
         "databasePort": "[if(variables('isPostgres'), 5432, 3306)]",
         "databaseServerName": "[concat(variables('uniqueNameSuffix'), '-', parameters('databaseClient'), '-dbserver')]",
         "databaseName": "[concat('strapi_', variables('uniqueNameSuffix'), '_db')]",
@@ -173,7 +180,7 @@
         "mySqlStorageRedundancy": "ZoneRedundancy",
         "backupRetentionDays": 7,
         "databaseCharset": "utf8",
-        "databaseCollation": "[if(variables('isPostgres') ,'en_US.utf8', 'utf8_general_ci')]",  // use appropriate locale that matches your language and region needs
+        "databaseCollation": "[if(variables('isPostgres') ,'en_US.utf8', 'utf8_general_ci')]",
                 
         "commServiceName": "[concat(variables('uniqueNameSuffix'), '-acsendpoint')]",
         "emailCommServiceName": "[concat(variables('uniqueNameSuffix'), '-emailacsendpoint')]",
@@ -212,32 +219,34 @@
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
         "webAppResourceId": "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
 
-
-
-        "appServicesApiVersion": "2024-04-01",
-        "storageAccountApiVersion": "2024-01-01",
-        "databaseApiVersion": "[if(variables('isPostgres'), '2024-11-01-preview', '2023-12-30')]",
-        "emailServiceApiVersion": "2023-04-01",
-        "vnetDeploymentApiVersion": "2024-07-01",
-        "privateDnsApiVersion": "2024-06-01",
-        "managedIdentityApiVersion": "2024-11-30",
-        "rbacAuthApiVersion": "2022-04-01",
-        "resourceDeploymentApiVersion": "2024-11-01",
-        "deploymentScriptsApiVersion": "2023-08-01"
+        "databaseApiVersion": "[if(variables('isPostgres'), '2024-11-01-preview', '2023-12-30')]"
     },
     "resources": [
-        
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2024-11-01",
+            "name": "pid-4127740a-b7c4-454b-bf97-db52f8502e66-partnercenter",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": []
+                }
+            }
+        },
+
         {
             "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-            "apiVersion": "[variables('managedIdentityApiVersion')]",
+            "apiVersion": "2024-11-30",
             "name": "[variables('managedIdentityName')]",
-            "location": "[variables('location')]",
+            "location": "[parameters('location')]",
             "properties": {},
             "tags": "[variables('tags')]"
         },
         {
             "type": "Microsoft.Authorization/roleDefinitions",
-            "apiVersion": "[variables('rbacAuthApiVersion')]",
+            "apiVersion": "2022-04-01",
             "name": "[variables('customEmailContributorRoleId')]",
             "properties": {
                 "roleName": "[concat('Custom Email Contributor - ', uniqueString(resourceGroup().id))]",
@@ -250,22 +259,19 @@
                         "actions": [
                             "Microsoft.Communication/communicationServices/Read",
                             "Microsoft.Communication/communicationServices/Write"
-                        ],
-                        "notActions": [],
-                        "dataActions": [],
-                        "notDataActions": []
+                        ]
                     }
                 ]
             }
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
-            "apiVersion": "[variables('rbacAuthApiVersion')]",
+            "apiVersion": "2022-04-01",
             "name": "[guid(variables('ecsAccountId'), variables('managedIdentityName'), 'CustomEmailContributor')]",
             "scope": "[variables('acsAccountId')]",
             "properties": {
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions/', variables('customEmailContributorRoleId'))]",
-                "principalId": "[reference(variables('managedIdentityResourceId'), variables('managedIdentityApiVersion')).principalId]",
+                "principalId": "[reference(variables('managedIdentityResourceId'), '2024-11-30').principalId]",
                 "principalType": "ServicePrincipal"
             },
             "dependsOn": [
@@ -276,12 +282,12 @@
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
-            "apiVersion": "[variables('rbacAuthApiVersion')]", 
+            "apiVersion": "2022-04-01", 
             "name": "[guid(variables('storageAccountId'), variables('managedIdentityName'), 'StorageBlobDataContributor')]",
             "scope": "[variables('storageAccountId')]",
             "properties": {
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions/', variables('storageBlobContributorRoleId'))]",
-                "principalId": "[reference(variables('managedIdentityResourceId'), variables('managedIdentityApiVersion')).principalId]",
+                "principalId": "[reference(variables('managedIdentityResourceId'), '2024-11-30').principalId]",
                 "principalType": "ServicePrincipal"
             },
             "dependsOn": [
@@ -292,8 +298,8 @@
 
         {
             "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "[variables('vnetDeploymentApiVersion')]",
-            "location": "[variables('location')]",
+            "apiVersion": "2024-05-01",
+            "location": "[parameters('location')]",
             "name": "[variables('vnetName')]",
             "tags": "[variables('tags')]",
             "properties": {
@@ -301,14 +307,12 @@
                     "addressPrefixes": [
                         "[variables('vnetAddressPrefix')]"
                     ]
-                },
-                "subnets": []
-            },
-            "dependsOn": []
+                }
+            }
         },
         {
             "type": "Microsoft.Network/virtualNetworks/subnets",
-            "apiVersion": "[variables('vnetDeploymentApiVersion')]",
+            "apiVersion": "2024-05-01",
             "name": "[format('{0}/{1}', variables('vnetName'), variables('appServiceSubnetName'))]",
             "properties": {
                 "addressPrefix": "[variables('appServiceSubnetPrefix')]",
@@ -327,7 +331,7 @@
         },
         {
             "type": "Microsoft.Network/virtualNetworks/subnets",
-            "apiVersion": "[variables('vnetDeploymentApiVersion')]",
+            "apiVersion": "2024-05-01",
             "name": "[format('{0}/{1}', variables('vnetName'), variables('databaseSubnetName'))]",
             "properties": {
                 "addressPrefix": "[variables('databaseSubnetPrefix')]",
@@ -348,10 +352,11 @@
         },
         {
             "type": "Microsoft.Network/privateDnsZones",
-            "apiVersion": "[variables('privateDnsApiVersion')]",
+            "apiVersion": "2024-06-01",
             "name": "[variables('privateDnsZoneName')]",
             "location": "global",
             "tags": "[variables('tags')]",
+            "properties": {},
             "dependsOn": [
                 "[variables('vnetId')]",
                 "[variables('appSubnetId')]",
@@ -360,7 +365,7 @@
         },
         {
             "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-            "apiVersion": "[variables('privateDnsApiVersion')]",
+            "apiVersion": "2024-06-01",
             "name": "[format('{0}/{1}', variables('privateDnsZoneName'), 'vnet-link')]",
             "location": "global",
             "properties": {
@@ -376,7 +381,7 @@
 
         {
             "type": "Microsoft.Communication/emailServices",
-            "apiVersion": "[variables('emailServiceApiVersion')]",
+            "apiVersion": "2023-04-01",
             "name": "[variables('emailCommServiceName')]",
             "location": "[variables('acsLocation')]",
             "tags": "[variables('tags')]",
@@ -386,7 +391,7 @@
         },
         {
             "type": "Microsoft.Communication/communicationServices",
-            "apiVersion": "[variables('emailServiceApiVersion')]",
+            "apiVersion": "2023-04-01",
             "name": "[variables('commServiceName')]",
             "location": "[variables('acsLocation')]",
             "tags": "[variables('tags')]",
@@ -402,7 +407,7 @@
         },
         {
             "type": "Microsoft.Communication/emailServices/domains",
-            "apiVersion": "[variables('emailServiceApiVersion')]",
+            "apiVersion": "2023-04-01",
             "name": "[concat(variables('emailCommServiceName'), '/', variables('emailDomainTitle'))]",
             "location": "[variables('acsLocation')]",
             "properties": {
@@ -415,7 +420,7 @@
         },
         {
             "type": "Microsoft.Communication/emailServices/domains/senderUsernames",
-            "apiVersion": "[variables('emailServiceApiVersion')]",
+            "apiVersion": "2023-04-01",
             "name": "[concat(variables('emailCommServiceName'), '/', variables('emailDomainTitle'), '/', variables('acsSenderName'))]",
             "properties": {
                 "displayName": "[variables('acsSenderName')]",
@@ -429,9 +434,9 @@
         {
             "condition": "[not(variables('isPostgres'))]",
             "type": "Microsoft.DBforMySQL/flexibleServers",
-            "apiVersion": "[variables('databaseApiVersion')]",
+            "apiVersion": "2023-12-30",
             "name": "[variables('databaseServerName')]",
-            "location": "[variables('location')]",
+            "location": "[parameters('location')]",
             "tags": "[variables('tags')]",
             "sku": {
                 "name": "[variables('dbSkuName')]",
@@ -468,7 +473,7 @@
         {
             "condition": "[not(variables('isPostgres'))]",
             "type": "Microsoft.DBforMySQL/flexibleServers/configurations",
-            "apiVersion": "[variables('databaseApiVersion')]",
+            "apiVersion": "2023-12-30",
             "name": "[format('{0}/{1}', variables('databaseServerName'), 'sql_generate_invisible_primary_key')]",
             "properties": {
                 "value": "OFF"
@@ -481,7 +486,7 @@
             "condition": "[not(variables('isPostgres'))]",
             "type": "Microsoft.DBforMySQL/flexibleServers/databases",
             "name": "[format('{0}/{1}', variables('databaseServerName'), variables('databaseName'))]",
-            "apiVersion": "[variables('databaseApiVersion')]",
+            "apiVersion": "2023-12-30",
             "properties": {
                 "charset": "[variables('databaseCharset')]",
                 "collation": "[variables('databaseCollation')]"
@@ -494,9 +499,9 @@
         {
             "condition": "[variables('isPostgres')]",
             "type": "Microsoft.DBforPostgreSQL/flexibleServers",
-            "apiVersion": "[variables('databaseApiVersion')]",
+            "apiVersion": "2024-11-01-preview",
             "name": "[variables('databaseServerName')]",
-            "location": "[variables('location')]",
+            "location": "[parameters('location')]",
             "tags": "[variables('tags')]",
             "sku": {
                 "name": "[variables('dbSkuName')]",
@@ -538,7 +543,7 @@
             "condition": "[variables('isPostgres')]",
             "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases",
             "name": "[format('{0}/{1}', variables('databaseServerName'), variables('databaseName'))]",
-            "apiVersion": "[variables('databaseApiVersion')]",
+            "apiVersion": "2024-11-01-preview",
             "properties": {
                 "charset": "[variables('databaseCharset')]",
                 "collation": "[variables('databaseCollation')]"
@@ -550,9 +555,9 @@
 
         {
             "type": "Microsoft.Web/serverfarms",
-            "apiVersion": "[variables('appServicesApiVersion')]",
+            "apiVersion": "2024-04-01",
             "name": "[variables('hostingPlanName')]",
-            "location": "[variables('location')]",
+            "location": "[parameters('location')]",
             "tags": "[variables('tags')]",
             "properties": {
                 "name": "[variables('hostingPlanName')]",
@@ -569,20 +574,114 @@
         {
             "name": "[parameters('appName')]",
             "type": "Microsoft.Web/sites",
-            "apiVersion": "[variables('appServicesApiVersion')]",
-            "location": "[variables('location')]",
+            "apiVersion": "2024-04-01",
+            "location": "[parameters('location')]",
             "tags": "[variables('tags')]",
             "properties": {
                 "name": "[parameters('appName')]",
                 "serverFarmId": "[variables('serverFarmId')]",
-                "httpsOnly": "true",
+                "httpsOnly": true,
                 "publicNetworkAccess": "[variables('publicNetworkAccess')]",
                 "autoGeneratedDomainNameLabelScope": "[variables('autoGeneratedDomainNameLabelScope')]",
                 "clientAffinityEnabled": false,
                 "siteConfig": {
                     "linuxFxVersion": "[variables('linuxFxVersion')]",
                     "appCommandLine": "[variables('startupCommand')]",
-                    "alwaysOn": "[variables('alwaysOn')]"
+                    "alwaysOn": "[variables('alwaysOn')]",
+                    "appSettings": [
+                        {
+                            "name": "WEBSITES_CONTAINER_START_TIME_LIMIT",
+                            "value": "[variables('containerStartTimeLimit')]"
+                        },
+                        {
+                            "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+                            "value": "[variables('scmDoBuildDuringDeployment')]"
+                        },
+                        {
+                            "name": "PORT",
+                            "value": "[variables('websitePort')]"
+                        },
+                        {
+                            "name": "NODE_ENV",
+                            "value": "[parameters('applicationMode')]"
+                        },
+                        {
+                            "name": "ENTRA_CLIENT_ID",
+                            "value": "[reference(variables('managedIdentityResourceId'), '2024-11-30').clientId]"
+                        },
+                        {
+                            "name": "DATABASE_CLIENT",
+                            "value": "[parameters('databaseClient')]"
+                        },
+                        {
+                            "name": "DATABASE_HOST",
+                            "value": "[reference(resourceId(variables('databaseServiceName'), variables('databaseServerName')), variables('databaseApiVersion')).fullyQualifiedDomainName]"
+                        },
+                        {
+                            "name": "DATABASE_PORT",
+                            "value": "[variables('databasePort')]"
+                        },
+                        {
+                            "name": "DATABASE_NAME",
+                            "value": "[variables('databaseName')]"
+                        },
+                        {
+                            "name": "DATABASE_USERNAME",
+                            "value": "[parameters('databaseAdminUsername')]"
+                        },
+                        {
+                            "name": "DATABASE_PASSWORD",
+                            "value": "[parameters('databaseAdminPassword')]"
+                        },
+                        {
+                            "name": "DATABASE_SSL",
+                            "value": "[variables('databaseSsl')]"
+                        },
+                        {
+                            "name": "STORAGE_AUTH_TYPE",
+                            "value": "[variables('storageAuthType')]"
+                        },
+                        {
+                            "name": "STORAGE_ACCOUNT_NAME",
+                            "value": "[variables('storageAccountName')]"
+                        },
+                        {
+                            "name": "BLOB_CONTAINER_NAME",
+                            "value": "[variables('blobContainerName')]"
+                        },
+                        {
+                            "name": "BLOB_STORAGE_URL",
+                            "value": "[reference(variables('storageAccountId'), '2024-01-01').primaryEndpoints.blob]"
+                        },
+                        {
+                            "name": "APP_KEYS",
+                            "value": "[parameters('appKeys')]"
+                        },
+                        {
+                            "name": "ADMIN_JWT_SECRET",
+                            "value": "[parameters('adminJwtSecret')]"
+                        },
+                        {
+                            "name": "JWT_SECRET",
+                            "value": "[parameters('jwtSecret')]"
+                        },
+                        {
+                            "name": "API_TOKEN_SALT",
+                            "value": "[parameters('apiTokenSalt')]"
+                        },
+                        {
+                            "name": "TRANSFER_TOKEN_SALT",
+                            "value": "[parameters('transferTokenSalt')]"
+                        },
+                        {
+                            "name": "AZURE_EMAIL_SERVICE_ENDPOINT",
+                            "value": "[concat('https://', reference(variables('acsAccountId')).hostName, '/')]"
+                        },
+                        {
+                            "name": "FROM_EMAIL",
+                            "value": "[concat( variables('acsSenderName'),'@',reference(variables('ecsAccountId')).mailFromSenderDomain)]"
+                        }
+                    ]
                 }
             },
             "identity": {
@@ -593,7 +692,7 @@
             },
             "dependsOn": [
                 "[variables('serverFarmId')]",
-                "[resourceId(concat(variables('databaseServiceName'), '/databases'), variables('databaseServerName'), variables('databaseName'))]",
+                "[resourceId(variables('databaseResouceType'), variables('databaseServerName'), variables('databaseName'))]",
                 "[variables('acsAccountId')]",
                 "[variables('managedIdentityResourceId')]",
                 "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('storageAccountName'), 'default', variables('blobContainerName'))]"
@@ -601,8 +700,8 @@
         },
         {
              "type": "Microsoft.Resources/deployments",
-             "apiVersion": "[variables('resourceDeploymentApiVersion')]",
-             "name": "[format('{0}-{1}', parameters('appName'), 'appSettings')]",
+             "apiVersion": "2024-11-01",
+             "name": "[format('{0}-{1}', parameters('appName'), 'networkConfigurations')]",
              "properties": {
                  "mode": "Incremental",
                  "template": {
@@ -612,116 +711,11 @@
                         {
                             "type": "Microsoft.Web/sites/networkConfig",
                             "name": "[format('{0}/{1}', parameters('appName'), 'virtualNetwork')]",
-                            "apiVersion": "[variables('appServicesApiVersion')]",
-                            "location": "[variables('location')]",
+                            "apiVersion": "2024-04-01",
+                            "location": "[parameters('location')]",
                             "properties": {
                                 "subnetResourceId": "[variables('appSubnetId')]"
                             }
-                        },
-                        {
-                            "type": "Microsoft.Web/sites/config",
-                            "apiVersion": "[variables('appServicesApiVersion')]",
-                            "name": "[concat(parameters('appName'), '/web')]",
-                            "properties": {
-                                "alwaysOn": "[variables('alwaysOn')]",
-                                "appSettings": [
-                                    {
-                                        "name": "WEBSITES_CONTAINER_START_TIME_LIMIT",
-                                        "value": "[variables('containerStartTimeLimit')]"
-                                    },
-                                    {
-                                        "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
-                                        "value": "[variables('scmDoBuildDuringDeployment')]"
-                                    },
-                                    {
-                                        "name": "PORT",
-                                        "value": "[variables('websitePort')]"
-                                    },
-                                    {
-                                        "name": "NODE_ENV",
-                                        "value": "[parameters('applicationMode')]"
-                                    },
-                                    {
-                                        "name": "ENTRA_CLIENT_ID",
-                                        "value": "[reference(variables('managedIdentityResourceId'), variables('managedIdentityApiVersion')).clientId]"
-                                    },
-                                    {
-                                        "name": "DATABASE_CLIENT",
-                                        "value": "[parameters('databaseClient')]"
-                                    },
-                                    {
-                                        "name": "DATABASE_HOST",
-                                        "value": "[reference(resourceId(variables('databaseServiceName'), variables('databaseServerName')), variables('databaseApiVersion')).fullyQualifiedDomainName]"
-                                    },
-                                    {
-                                        "name": "DATABASE_PORT",
-                                        "value": "[variables('databasePort')]"
-                                    },
-                                    {
-                                        "name": "DATABASE_NAME",
-                                        "value": "[variables('databaseName')]"
-                                    },
-                                    {
-                                        "name": "DATABASE_USERNAME",
-                                        "value": "[parameters('databaseAdminUsername')]"
-                                    },
-                                    {
-                                        "name": "DATABASE_PASSWORD",
-                                        "value": "[parameters('databaseAdminPassword')]"
-                                    },
-                                    {
-                                        "name": "DATABASE_SSL",
-                                        "value": "[variables('databaseSsl')]"
-                                    },
-                                    {
-                                        "name": "STORAGE_AUTH_TYPE",
-                                        "value": "[variables('storageAuthType')]"
-                                    },
-                                    {
-                                        "name": "STORAGE_ACCOUNT_NAME",
-                                        "value": "[variables('storageAccountName')]"
-                                    },
-                                    {
-                                        "name": "BLOB_CONTAINER_NAME",
-                                        "value": "[variables('blobContainerName')]"
-                                    },
-                                    {
-                                        "name": "BLOB_STORAGE_URL",
-                                        "value": "[reference(variables('storageAccountId'), variables('storageAccountApiVersion')).primaryEndpoints.blob]"
-                                    },
-                                    {
-                                        "name": "APP_KEYS",
-                                        "value": "[parameters('appKeys')]"
-                                    },
-                                    {
-                                        "name": "ADMIN_JWT_SECRET",
-                                        "value": "[parameters('adminJwtSecret')]"
-                                    },
-                                    {
-                                        "name": "JWT_SECRET",
-                                        "value": "[parameters('jwtSecret')]"
-                                    },
-                                    {
-                                        "name": "API_TOKEN_SALT",
-                                        "value": "[parameters('apiTokenSalt')]"
-                                    },
-                                    {
-                                        "name": "TRANSFER_TOKEN_SALT",
-                                        "value": "[parameters('transferTokenSalt')]"
-                                    },
-                                    {
-                                        "name": "AZURE_EMAIL_SERVICE_ENDPOINT",
-                                        "value": "[concat('https://', reference(variables('acsAccountId')).hostName, '/')]"
-                                    },
-                                    {
-                                        "name": "FROM_EMAIL",
-                                        "value": "[concat( variables('acsSenderName'),'@',reference(variables('ecsAccountId')).mailFromSenderDomain)]"
-                                    }
-                                ]
-                            },
-                            "dependsOn": [
-                                "[resourceId('Microsoft.Web/sites/networkConfig', parameters('appName'), 'virtualNetwork')]"
-                            ]
                         }
                      ]
                 }
@@ -733,7 +727,7 @@
         },
         {
              "type": "Microsoft.Resources/deployments",
-             "apiVersion": "[variables('resourceDeploymentApiVersion')]",
+             "apiVersion": "2024-11-01",
              "name": "[format('{0}-{1}', parameters('appName'), 'bpcpConfigurations')]",
              "properties": {
                  "mode": "Incremental",
@@ -744,7 +738,7 @@
                         {
                             "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
                             "name": "[concat(parameters('appName'), '/scm')]",
-                            "apiVersion": "[variables('appServicesApiVersion')]",
+                            "apiVersion": "2024-04-01",
                             "properties": {
                                 "allow": "false"
                             }
@@ -752,7 +746,7 @@
                         {
                             "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
                             "name": "[concat(parameters('appName'), '/ftp')]",
-                            "apiVersion": "[variables('appServicesApiVersion')]",
+                            "apiVersion": "2024-04-01",
                             "properties": {
                                 "allow": "false"
                             }
@@ -767,7 +761,7 @@
         {
             "condition": "[not(variables('isAppInProdMode'))]",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "[variables('resourceDeploymentApiVersion')]",
+            "apiVersion": "2024-11-01",
             "name": "[format('{0}-{1}', parameters('appName'), 'oneDeploy')]",
             "properties": {
                 "mode": "Incremental",
@@ -775,12 +769,11 @@
                     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
                     "contentVersion": "1.0.0.0",
                     "resources": [
-                        // This is a dummy script to delay the package deployment by 30s to ensure the SCM container is up and running to handle the deployment
                         {
                             "type": "Microsoft.Resources/deploymentScripts",
-                            "apiVersion": "[variables('deploymentScriptsApiVersion')]",
+                            "apiVersion": "2023-08-01",
                             "name": "[format('{0}-{1}', parameters('appName'), 'deployDelayScript')]",
-                            "location": "[variables('location')]",
+                            "location": "[parameters('location')]",
                             "kind": "AzurePowerShell",
                             "identity": {
                                 "type": "UserAssigned",
@@ -799,8 +792,8 @@
                         {
                             "type": "Microsoft.Web/sites/extensions",
                             "name": "[format('{0}/{1}', parameters('appName'), 'onedeploy')]",
-                            "apiVersion": "[variables('appServicesApiVersion')]",
-                            "location": "[variables('location')]",
+                            "apiVersion": "2024-04-01",
+                            "location": "[parameters('location')]",
                             "properties": {
                                 "type": "zip",
                                 "packageUri": "[variables('artifactLocation')]"
@@ -813,7 +806,7 @@
                 }
             },
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments', format('{0}-{1}', parameters('appName'), 'appSettings'))]",
+                "[resourceId('Microsoft.Resources/deployments', format('{0}-{1}', parameters('appName'), 'networkConfigurations'))]",
                 "[resourceId('Microsoft.Resources/deployments', format('{0}-{1}', parameters('appName'), 'bpcpConfigurations'))]",
                 "[variables('managedIdentityResourceId')]"
             ]
@@ -822,8 +815,8 @@
         {
             "name": "[variables('storageAccountName')]",
             "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "[variables('storageAccountApiVersion')]",
-            "location": "[variables('location')]",
+            "apiVersion": "2024-01-01",
+            "location": "[parameters('location')]",
             "properties": {
                 "accessTier": "[variables('accessTier')]",
                 "minimumTlsVersion": "[variables('minimumTlsVersion')]",
@@ -833,8 +826,7 @@
                 "defaultToOAuthAuthentication": "[variables('defaultToOAuthAuthentication')]",
                 "networkAcls": {
                     "bypass": "[variables('networkAclsBypass')]",
-                    "defaultAction": "[variables('networkAclsDefaultAction')]",
-                    "ipRules": []
+                    "defaultAction": "[variables('networkAclsDefaultAction')]"
                 },
                 "encryption": {
                     "keySource": "[variables('keySource')]",
@@ -863,7 +855,7 @@
         {
             "name": "[format('{0}/{1}', variables('storageAccountName'), variables('blobServiceName'))]",
             "type": "Microsoft.Storage/storageAccounts/blobServices",
-            "apiVersion": "[variables('storageAccountApiVersion')]",
+            "apiVersion": "2024-01-01",
             "properties": {
                 "deleteRetentionPolicy": {
                     "enabled": "[variables('deleteRetentionPolicy').enabled]",
@@ -880,7 +872,7 @@
         },
         {
             "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-            "apiVersion": "[variables('storageAccountApiVersion')]",
+            "apiVersion": "2024-01-01",
             "name": "[format('{0}/{1}/{2}', variables('storageAccountName'), variables('blobServiceName'), variables('blobContainerName'))]",
             "properties": {
                 "publicAccess": "[variables('blobPublicAccessLevel')]"
