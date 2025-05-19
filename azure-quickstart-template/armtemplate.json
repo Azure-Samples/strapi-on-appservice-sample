@@ -46,7 +46,7 @@
                 "description": "Enable or disable public access to the blob storage account that will be used to store Strapi media files. If disabled, only private access will be allowed."
             }
         },
-        "emailDataLocation":{
+        "emailDataLocation": {
             "type": "string",
             "defaultValue": "unitedstates",
             "allowedValues": [
@@ -81,44 +81,14 @@
             "metadata": {
                 "description": "Use development mode to start, develop, or test your Strapi application. For production, always set it to production mode, which disables edit controls for the content type builder."
             }
-        },
-        "appKeys": {
-            "type": "securestring",
-            "metadata": {
-                "description": "A comma separated list of secret keys (strings) to sign the session cookies. Used by Strapi's session middleware."
-            }
-        },
-        "jwtSecret": {
-            "type": "securestring",
-            "metadata": {
-                "description": "The secret used to sign the JWT for Strapi's Users-Permissions plugin."
-            }
-        },
-        "adminJwtSecret": {
-            "type": "securestring",
-            "metadata": {
-                "description": "The secret used to sign the JWT for the Strapi Admin panel."
-            }
-        },
-        "apiTokenSalt": {
-            "type": "securestring",
-            "metadata": {
-                "description": "Salt used to generate tokens for Strapi APIs. If not defined, authenticated API features may not work correctly."
-            }
-        },
-        "transferTokenSalt": {
-            "type": "securestring",
-            "metadata": {
-                "description": "Salt used to generate transfer tokens for Strapi data transfer between instances. If not defined, transfer features will be disabled."
-            }
         }
     },
     "variables": {
         "appNameShortened": "[take(replace(parameters('appName'),'-',''), 9)]",
         "uniqueNameSuffix": "[toLower(concat(variables('appNameShortened'), '-', uniqueString(parameters('appName'), resourceGroup().id)))]",
         "hostingPlanName": "[concat('asp-', variables('uniqueNameSuffix'))]",
-        "tags": { 
-            "AppProfile": "Strapi" 
+        "tags": {
+            "AppProfile": "Strapi"
         },
         "artifactLocation": "https://github.com/Azure-Samples/strapi-on-appservice-sample/raw/refs/heads/main/strapi-packages/strapi-on-appservice-demo.zip",
         "startupCommand": "[if(equals(toLower(parameters('applicationMode')),'development'), 'npm run develop', '')]",
@@ -161,7 +131,7 @@
         },
 
         "isPostgres": "[equals(parameters('databaseClient'), 'postgres')]",
-        "databaseVersion":"[if(variables('isPostgres'), '16', '8.0.21')]",
+        "databaseVersion": "[if(variables('isPostgres'), '16', '8.0.21')]",
         "databaseServiceName": "[if(variables('isPostgres'), 'Microsoft.DBforPostgreSQL/flexibleServers', 'Microsoft.DBforMySQL/flexibleServers')]",
         "databaseResouceType": "[concat(variables('databaseServiceName'), '/databases')]",
         "databasePort": "[if(variables('isPostgres'), 5432, 3306)]",
@@ -181,7 +151,7 @@
         "backupRetentionDays": 7,
         "databaseCharset": "utf8",
         "databaseCollation": "[if(variables('isPostgres') ,'en_US.utf8', 'utf8_general_ci')]",
-                
+
         "commServiceName": "[concat(variables('uniqueNameSuffix'), '-acsendpoint')]",
         "emailCommServiceName": "[concat(variables('uniqueNameSuffix'), '-emailacsendpoint')]",
         "emailDomainTitle": "AzureManagedDomain",
@@ -190,34 +160,51 @@
         "acsDomainManagement": "AzureManaged",
         "enableAcsEngagementTracking": "Disabled",
 
+        "kvName": "[concat(take(variables('uniqueNameSuffix'), 21), '-kv')]",
+        "kvSku": "standard",
+        "kvEnabledRbac": true,
+        "kvPublicNetworkAccess": "Disabled",
+        "kvPrivateEndpointName": "[concat(variables('kvName'), '-private')]",
+        "kvPrivateEndpointGroupName": "vault",
+        "kvPublicDNSZoneForwarder": ".vaultcore.azure.net",
+
         "vnetName": "[concat(variables('uniqueNameSuffix'), '-vnet')]",
         "vnetAddressPrefix": "10.0.0.0/16",
         "appServiceSubnetName": "[concat(variables('uniqueNameSuffix'), '-appsubnet')]",
         "appServiceSubnetPrefix": "10.0.0.0/25",
         "databaseSubnetName": "[concat(variables('uniqueNameSuffix'), '-dbsubnet')]",
         "databaseSubnetPrefix": "10.0.1.0/25",
-        
-        "privateDomainSuffix": "[if(variables('isPostgres') , '.postgres.database.azure.com', '.mysql.database.azure.com')]",
-        "privateDnsZoneName": "[concat(variables('uniqueNameSuffix'), '-privatelink', variables('privateDomainSuffix'))]",
+        "kvSubnetName": "[concat(variables('uniqueNameSuffix'), '-kvsubnet')]",
+        "kvSubnetPrefix": "10.0.2.0/27",
+
+        "dbPrivateDomainSuffix": "[if(variables('isPostgres') , '.postgres.database.azure.com', '.mysql.database.azure.com')]",
+        "dbPrivateDnsZoneName": "[concat(variables('uniqueNameSuffix'), '-privatelink', variables('dbPrivateDomainSuffix'))]",
+        "kvPrivateDnsZoneName": "[concat('privatelink', variables('kvPublicDNSZoneForwarder'))]",
 
         "managedIdentityName": "[concat(variables('uniqueNameSuffix'), '-sid')]",
         "customEmailContributorRoleId": "[guid(resourceGroup().name, variables('commServiceName'), 'CustomEmailContributorRole')]",
         "storageBlobContributorRoleId": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
- 
-
+        "kvSecretsUserRoleId": "4633458b-17de-408a-b874-0445c86b69e6",
 
         "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
         "appSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('appServiceSubnetName'))]",
         "databaseSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('databaseSubnetName'))]",
-        "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
-        "vnetLinkResourceId": "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('privateDnsZoneName'), 'vnet-link')]",
+        "kvSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('kvSubnetName'))]",
+        "dbPrivateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('dbPrivateDnsZoneName'))]",
+        "kvPrivateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('kvPrivateDnsZoneName'))]",
+        "kvPrivateEndpointId": "[resourceId('Microsoft.Network/privateEndpoints', variables('kvPrivateEndpointName'))]",
+        "kvPrivateZoneGroupResourceId": "[resourceId('Microsoft.Network/privateEndpoints/privateDnsZoneGroups', variables('kvPrivateEndpointName'), concat(variables('kvPrivateEndpointGroupName'), 'PrivateDnsZoneGroup'))]",
+        "dbVnetLinkResourceId": "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('dbPrivateDnsZoneName'), 'vnet-link')]",
+        "kvVnetLinkResourceId": "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('kvPrivateDnsZoneName'), 'vnet-link')]",
         "managedIdentityResourceId": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))]",
         "acsAccountId": "[resourceId('Microsoft.Communication/CommunicationServices', variables('commServiceName'))]",
         "ecsAccountId": "[resourceId('Microsoft.Communication/emailServices/domains', variables('emailCommServiceName'), variables('emailDomainTitle'))]",
         "databaseServerId": "[resourceId(variables('databaseServiceName'), variables('databaseServerName'))]",
         "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "kvResourceId": "[resourceId('Microsoft.KeyVault/vaults', variables('kvName'))]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
         "webAppResourceId": "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
+        "secretGenerateDeploymentId": "[resourceId('Microsoft.Resources/deployments', format('{0}-{1}', parameters('appName'), 'strapiSecretGeneration'))]",
 
         "databaseApiVersion": "[if(variables('isPostgres'), '2024-11-01-preview', '2023-12-30')]"
     },
@@ -282,7 +269,7 @@
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
-            "apiVersion": "2022-04-01", 
+            "apiVersion": "2022-04-01",
             "name": "[guid(variables('storageAccountId'), variables('managedIdentityName'), 'StorageBlobDataContributor')]",
             "scope": "[variables('storageAccountId')]",
             "properties": {
@@ -293,6 +280,21 @@
             "dependsOn": [
                 "[variables('managedIdentityResourceId')]",
                 "[variables('storageAccountId')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "scope": "[variables('kvResourceId')]",
+            "name": "[guid(variables('kvResourceId'), variables('managedIdentityName'), 'KeyValutSecretsUser')]",
+            "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions/', variables('kvSecretsUserRoleId'))]",
+                "principalId": "[reference(variables('managedIdentityResourceId'), '2024-11-30').principalId]",
+                "principalType": "ServicePrincipal"
+            },
+            "dependsOn": [
+                "[variables('managedIdentityResourceId')]",
+                "[variables('kvResourceId')]"
             ]
         },
 
@@ -351,12 +353,17 @@
             ]
         },
         {
-            "type": "Microsoft.Network/privateDnsZones",
-            "apiVersion": "2024-06-01",
-            "name": "[variables('privateDnsZoneName')]",
-            "location": "global",
-            "tags": "[variables('tags')]",
-            "properties": {},
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2024-05-01",
+            "name": "[format('{0}/{1}', variables('vnetName'), variables('kvSubnetName'))]",
+            "properties": {
+                "addressPrefix": "[variables('kvSubnetPrefix')]",
+                "serviceEndpoints": [
+                    {
+                        "service": "Microsoft.KeyVault"
+                    }
+                ]
+            },
             "dependsOn": [
                 "[variables('vnetId')]",
                 "[variables('appSubnetId')]",
@@ -364,9 +371,23 @@
             ]
         },
         {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2024-06-01",
+            "name": "[variables('kvPrivateDnsZoneName')]",
+            "location": "global",
+            "tags": "[variables('tags')]",
+            "properties": {},
+            "dependsOn": [
+                "[variables('vnetId')]",
+                "[variables('appSubnetId')]",
+                "[variables('databaseSubnetId')]",
+                "[variables('kvSubnetId')]"
+            ]
+        },
+        {
             "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
             "apiVersion": "2024-06-01",
-            "name": "[format('{0}/{1}', variables('privateDnsZoneName'), 'vnet-link')]",
+            "name": "[format('{0}/{1}', variables('kvPrivateDnsZoneName'), 'vnet-link')]",
             "location": "global",
             "properties": {
                 "virtualNetwork": {
@@ -375,7 +396,265 @@
                 "registrationEnabled": false
             },
             "dependsOn": [
-                "[variables('privateDnsZoneId')]"
+                "[variables('kvPrivateDnsZoneId')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2024-06-01",
+            "name": "[variables('dbPrivateDnsZoneName')]",
+            "location": "global",
+            "tags": "[variables('tags')]",
+            "properties": {},
+            "dependsOn": [
+                "[variables('vnetId')]",
+                "[variables('appSubnetId')]",
+                "[variables('databaseSubnetId')]",
+                "[variables('kvSubnetId')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2024-06-01",
+            "name": "[format('{0}/{1}', variables('dbPrivateDnsZoneName'), 'vnet-link')]",
+            "location": "global",
+            "properties": {
+                "virtualNetwork": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+                },
+                "registrationEnabled": false
+            },
+            "dependsOn": [
+                "[variables('dbPrivateDnsZoneId')]"
+            ]
+        },
+
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2024-11-01",
+            "name": "[variables('kvName')]",
+            "location": "[parameters('location')]",
+            "tags": "[variables('tags')]",
+            "properties": {
+                "createMode": "Default",
+                "sku": {
+                    "family": "A",
+                    "name": "[variables('kvSku')]"
+                },
+                "tenantId": "[subscription().tenantId]",
+                "accessPolicies": [],
+                "enableRbacAuthorization": "[variables('kvEnabledRbac')]",
+                "enabledForTemplateDeployment": true,
+                "enabledForDeployment": true,
+                "publicNetworkAccess": "[variables('kvPublicNetworkAccess')]",
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "defaultAction": "deny"
+                }
+
+            },
+            "dependsOn": [
+                "[variables('kvVnetLinkResourceId')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2024-05-01",
+            "name": "[variables('kvPrivateEndpointName')]",
+            "location": "[parameters('location')]",
+            "tags": "[variables('tags')]",
+            "properties": {
+                "subnet": {
+                    "id": "[variables('kvSubnetId')]"
+                },
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "kvPrivateLink",
+                        "properties": {
+                            "privateLinkServiceId": "[variables('kvResourceId')]",
+                            "groupIds": [ "[variables('kvPrivateEndpointGroupName')]" ]
+                        }
+                    }
+                ],
+                "customDnsConfigs": [
+                    {
+                        "fqdn": "[concat(variables('kvName'), variables('kvPublicDNSZoneForwarder'))]"
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[variables('kvVnetLinkResourceId')]",
+                "[variables('kvResourceId')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2024-05-01",
+            "name": "[concat(variables('kvPrivateEndpointName'),'/', variables('kvPrivateEndpointGroupName'), 'PrivateDnsZoneGroup')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "privateDnsZoneConfigs": [
+                {
+                    "name": "dnsConfig",
+                    "properties": {
+                        "privateDnsZoneId": "[variables('kvPrivateDnsZoneId')]"
+                    }
+                }
+                ]
+            },
+            "dependsOn": [
+                "[variables('kvResourceId')]",
+                "[variables('kvPrivateDnsZoneId')]",
+                "[variables('kvPrivateEndpointId')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2024-11-01",
+            "name": "[format('{0}-{1}', parameters('appName'), 'strapiSecretGeneration')]",
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "parameters": {
+                    "kvName": {
+                        "value": "[variables('kvName')]"
+                    },
+                    "databaseAdminPassword": {
+                        "value": "[parameters('databaseAdminPassword')]"
+                    },
+                    "location": {
+                        "value": "[resourceGroup().location]"
+                    },
+                    "managedIdentityResourceId": {
+                        "value": "[variables('managedIdentityResourceId')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "kvName": {
+                            "type": "string"
+                        },
+                        "databaseAdminPassword": {
+                            "type": "securestring"
+                        },
+                        "location": {
+                            "type": "string"
+                        },
+                        "managedIdentityResourceId": {
+                            "type": "string"
+                        }
+                    },
+                    "variables": {
+                        "strapiSecrets": [
+                            {
+                                "name": "StrapiAppKeys",
+                                "scriptOutputKey": "strapiAppKeys"
+                            },
+                            {
+                                "name": "StrapiJwtSecret",
+                                "scriptOutputKey": "strapiJwtSecret"
+                            },
+                            {
+                                "name": "StrapiAdminJwtSecret",
+                                "scriptOutputKey": "strapiAdminJwtSecret"
+                            },
+                            {
+                                "name": "StrapiApiTokenSalt",
+                                "scriptOutputKey": "strapiApiTokenSalt"
+                            },
+                            {
+                                "name": "StrapiTransferTokenSalt",
+                                "scriptOutputKey": "strapiTransferTokenSalt"
+                            }
+                        ],
+                        "scriptUri": "https://raw.githubusercontent.com/Azure-Samples/strapi-on-appservice-sample/refs/heads/main/scripts/Get-StrapiSecrets.ps1"
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.Resources/deploymentScripts",
+                            "apiVersion": "2023-08-01",
+                            "name": "generateStrapiSecrets",
+                            "location": "[parameters('location')]",
+                            "kind": "AzurePowerShell",
+                            "properties": {
+                                "azPowerShellVersion": "13.2",
+                                "primaryScriptUri": "[variables('scriptUri')]",
+                                "cleanupPreference": "Always",
+                                "retentionInterval": "PT1H",
+                                "timeout": "PT5M"
+                            },
+                            "identity": {
+                                "type": "UserAssigned",
+                                "userAssignedIdentities": {
+                                    "[parameters('managedIdentityResourceId')]": {}
+                                }
+                            }
+                        },
+                        {
+                            "type": "Microsoft.KeyVault/vaults/secrets",
+                            "apiVersion": "2024-11-01",
+                            "name": "[format('{0}/{1}', parameters('kvName'), 'DatabaseAdminPassword')]",
+                            "properties": {
+                                "attributes": {
+                                    "enabled": true
+                                },
+                                "value": "[parameters('databaseAdminPassword')]"
+                            }
+                        },
+                        {
+                            "copy": {
+                                "name": "secretsCopy",
+                                "count": "[length(variables('strapiSecrets'))]"
+                            },
+                            "type": "Microsoft.KeyVault/vaults/secrets",
+                            "apiVersion": "2024-11-01",
+                            "name": "[concat(parameters('kvName'), '/', variables('strapiSecrets')[copyIndex('secretsCopy')].name)]",
+                            "properties": {
+                                "attributes": {
+                                    "enabled": true
+                                },
+                                "value": "[reference('generateStrapiSecrets').outputs[variables('strapiSecrets')[copyIndex('secretsCopy')].scriptOutputKey]]"
+                            },
+                            "dependsOn": [
+                                "generateStrapiSecrets"
+                            ]
+                        }
+                    ],
+                    "outputs": {
+                        "databaseAdminPwdUri": {
+                            "type": "string",
+                            "value": "[reference(resourceId('Microsoft.KeyVault/vaults/secrets', parameters('kvName'), 'DatabaseAdminPassword'), '2024-11-01').secretUriWithVersion]"
+                        },
+                        "strapiAppKeysUri": {
+                            "type": "string",
+                            "value": "[reference(resourceId('Microsoft.KeyVault/vaults/secrets', parameters('kvName'), 'StrapiAppKeys'), '2024-11-01').secretUriWithVersion]"
+                        },
+                        "strapiJwtSecretUri": {
+                            "type": "string",
+                            "value": "[reference(resourceId('Microsoft.KeyVault/vaults/secrets', parameters('kvName'), 'StrapiJwtSecret'), '2024-11-01').secretUriWithVersion]"
+                        },
+                        "strapiAdminJwtSecretUri": {
+                            "type": "string",
+                            "value": "[reference(resourceId('Microsoft.KeyVault/vaults/secrets', parameters('kvName'), 'StrapiAdminJwtSecret'), '2024-11-01').secretUriWithVersion]"
+                        },
+                        "strapiApiTokenSaltUri": {
+                            "type": "string",
+                            "value": "[reference(resourceId('Microsoft.KeyVault/vaults/secrets', parameters('kvName'), 'StrapiApiTokenSalt'), '2024-11-01').secretUriWithVersion]"
+                        },
+                        "strapiTransferTokenSaltUri": {
+                            "type": "string",
+                            "value": "[reference(resourceId('Microsoft.KeyVault/vaults/secrets', parameters('kvName'), 'StrapiTransferTokenSalt'), '2024-11-01').secretUriWithVersion]"
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[variables('kvPrivateZoneGroupResourceId')]",
+                "[variables('managedIdentityResourceId')]"
             ]
         },
 
@@ -449,11 +728,11 @@
                 "administratorLoginPassword": "[parameters('databaseAdminPassword')]",
                 "highAvailability": {
                     "mode": "[variables('highAvailability')]"
-                },               
+                },
                 "network": {
                     "publicNetworkAccess": "[variables('databasePublicNetworkAccess')]",
                     "DelegatedSubnetResourceId": "[variables('databaseSubnetId')]",
-                    "PrivateDnsZoneResourceId": "[variables('privateDnsZoneId')]"
+                    "PrivateDnsZoneResourceId": "[variables('dbPrivateDnsZoneId')]"
                 },
                 "storage": {
                     "autoGrow": "[variables('storageAutoGrow')]",
@@ -466,7 +745,7 @@
                 }
             },
             "dependsOn": [
-                "[variables('vnetLinkResourceId')]",
+                "[variables('dbVnetLinkResourceId')]",
                 "[variables('databaseSubnetId')]"
             ]
         },
@@ -525,7 +804,7 @@
                 "network": {
                     "publicNetworkAccess": "[variables('databasePublicNetworkAccess')]",
                     "delegatedSubnetResourceId": "[variables('databaseSubnetId')]",
-                    "privateDnsZoneArmResourceId": "[variables('privateDnsZoneId')]"
+                    "privateDnsZoneArmResourceId": "[variables('dbPrivateDnsZoneId')]"
                 },
                 "storage": {
                     "autoGrow": "[variables('storageAutoGrow')]",
@@ -535,7 +814,7 @@
                 }
             },
             "dependsOn": [
-                "[variables('vnetLinkResourceId')]",
+                "[variables('dbVnetLinkResourceId')]",
                 "[variables('databaseSubnetId')]"
             ]
         },
@@ -584,6 +863,7 @@
                 "publicNetworkAccess": "[variables('publicNetworkAccess')]",
                 "autoGeneratedDomainNameLabelScope": "[variables('autoGeneratedDomainNameLabelScope')]",
                 "clientAffinityEnabled": false,
+                "keyVaultReferenceIdentity": "[variables('managedIdentityResourceId')]",
                 "siteConfig": {
                     "linuxFxVersion": "[variables('linuxFxVersion')]",
                     "appCommandLine": "[variables('startupCommand')]",
@@ -631,7 +911,7 @@
                         },
                         {
                             "name": "DATABASE_PASSWORD",
-                            "value": "[parameters('databaseAdminPassword')]"
+                            "value": "[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('secretGenerateDeploymentId')).outputs.databaseAdminPwdUri.value, ')')]"
                         },
                         {
                             "name": "DATABASE_SSL",
@@ -655,23 +935,23 @@
                         },
                         {
                             "name": "APP_KEYS",
-                            "value": "[parameters('appKeys')]"
+                            "value": "[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('secretGenerateDeploymentId')).outputs.strapiAppKeysUri.value, ')')]"
                         },
                         {
                             "name": "ADMIN_JWT_SECRET",
-                            "value": "[parameters('adminJwtSecret')]"
+                            "value": "[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('secretGenerateDeploymentId')).outputs.strapiAdminJwtSecretUri.value, ')')]"
                         },
                         {
                             "name": "JWT_SECRET",
-                            "value": "[parameters('jwtSecret')]"
+                            "value": "[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('secretGenerateDeploymentId')).outputs.strapiJwtSecretUri.value, ')')]"
                         },
                         {
                             "name": "API_TOKEN_SALT",
-                            "value": "[parameters('apiTokenSalt')]"
+                            "value": "[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('secretGenerateDeploymentId')).outputs.strapiApiTokenSaltUri.value, ')')]"
                         },
                         {
                             "name": "TRANSFER_TOKEN_SALT",
-                            "value": "[parameters('transferTokenSalt')]"
+                            "value": "[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('secretGenerateDeploymentId')).outputs.strapiTransferTokenSaltUri.value, ')')]"
                         },
                         {
                             "name": "AZURE_EMAIL_SERVICE_ENDPOINT",
@@ -695,19 +975,21 @@
                 "[resourceId(variables('databaseResouceType'), variables('databaseServerName'), variables('databaseName'))]",
                 "[variables('acsAccountId')]",
                 "[variables('managedIdentityResourceId')]",
+                "[variables('kvPrivateZoneGroupResourceId')]",
+                "[variables('secretGenerateDeploymentId')]",
                 "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('storageAccountName'), 'default', variables('blobContainerName'))]"
             ]
         },
         {
-             "type": "Microsoft.Resources/deployments",
-             "apiVersion": "2024-11-01",
-             "name": "[format('{0}-{1}', parameters('appName'), 'networkConfigurations')]",
-             "properties": {
-                 "mode": "Incremental",
-                 "template": {
-                     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                     "contentVersion": "1.0.0.0",
-                     "resources": [
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2024-11-01",
+            "name": "[format('{0}-{1}', parameters('appName'), 'networkConfigurations')]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
                         {
                             "type": "Microsoft.Web/sites/networkConfig",
                             "name": "[format('{0}/{1}', parameters('appName'), 'virtualNetwork')]",
@@ -717,24 +999,24 @@
                                 "subnetResourceId": "[variables('appSubnetId')]"
                             }
                         }
-                     ]
+                    ]
                 }
-             },
+            },
             "dependsOn": [
                 "[variables('webAppResourceId')]",
-                "[variables('vnetLinkResourceId')]"
+                "[variables('dbVnetLinkResourceId')]"
             ]
         },
         {
-             "type": "Microsoft.Resources/deployments",
-             "apiVersion": "2024-11-01",
-             "name": "[format('{0}-{1}', parameters('appName'), 'bpcpConfigurations')]",
-             "properties": {
-                 "mode": "Incremental",
-                 "template": {
-                     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                     "contentVersion": "1.0.0.0",
-                     "resources": [
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2024-11-01",
+            "name": "[format('{0}-{1}', parameters('appName'), 'bpcpConfigurations')]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
                         {
                             "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
                             "name": "[concat(parameters('appName'), '/scm')]",
@@ -751,9 +1033,9 @@
                                 "allow": "false"
                             }
                         }
-                     ]
+                    ]
                 }
-             },
+            },
             "dependsOn": [
                 "[variables('webAppResourceId')]"
             ]
