@@ -2,17 +2,12 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "appName": { "value": "[Enter application name....]" },
+        "appName": { "value": "<your-strapi-app-name>" },
         "databaseClient": { "value": "postgres" },
-        "databaseAdminUsername": { "value": "[Enter admin username for the DB Server....]" },
-        "databaseAdminPassword": { "value": "[Enter admin password for the DB Server....]" },
+        "databaseAdminUsername": { "value": "<db-admin-username>" },
+        "databaseAdminPassword": { "value": "<db-admin-password>" },
         "storageAccountPublicAccessEnabled": { "value": false },
         "emailDataLocation": { "value": "unitedstates" },
-        "appKeys": { "value": "[Enter Strapi app keys....]" },
-        "jwtSecret": { "value": "[Enter Strapi JWT secret....]" },
-        "adminJwtSecret": { "value": "[Enter Strapi admin JWT secret....]" },
-        "transferTokenSalt": { "value": "[Enter Strapi transfer token salt....]" },
-        "apiTokenSalt": { "value": "[Enter Strapi API token salt....]" },
         "applicationMode": { "value": "development" }
     }
 }
